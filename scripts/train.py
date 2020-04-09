@@ -35,7 +35,7 @@ if __name__ == "__main__":
         batch_size=64,
         scaler_train_passes=1)
     
-    data18 = Dataset("/home/cm/Projects/SegmapClassifier/dataset/dataset18_big")
+    data18 = Dataset("/home/caoming/Projects/SegMapClassifier/dataset/dataset18_big")
     # data18.load()
 
     segments, _, ids, n_ids, features, matches, labels_dict = data18.load(preprocessor=preprocessor)

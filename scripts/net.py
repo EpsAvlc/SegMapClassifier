@@ -17,13 +17,14 @@ class SegMapNet(nn.Module):
 
     def __init__(self):
         super(SegMapNet, self).__init__()
-        self.conv1 = nn.Conv3d(1, 32, kernel_size=(3, 3, 3), padding=(2, 2, 2))
+        self.conv1 = nn.Conv3d(1, 32, kernel_size=(3, 3, 3), padding=(1, 1, 1))
         self.pool1 = nn.MaxPool3d(kernel_size=(2, 2, 2), stride=(2, 2, 2))
-        self.conv2 = nn.Conv3d(32, 64, kernel_size=(3, 3, 3), padding=(2, 2, 2))
+        self.conv2 = nn.Conv3d(32, 64, kernel_size=(3, 3, 3), padding=(1, 1, 1))
         self.pool2 = nn.MaxPool3d(kernel_size=(2, 2, 2), stride=(2, 2, 2))
-        self.conv3 = nn.Conv3d(64, 64, kernel_size=(3, 3, 3), padding=(2, 2, 2))
-        self.fc1 = nn.Linear(64 * 5 * 5 * 1, 512)
-        self.bn1 = nn.BatchNorm3d(512)
+        self.conv3 = nn.Conv3d(64, 64, kernel_size=(3, 3, 3), padding=(1, 1, 1))
+        self.fc1 = nn.Linear(64 * 8 * 8 * 4, 512)
+        # TODO: BN ERROR.
+        self.bn1 = nn.BatchNorm2d(512)
         self.dropout = nn.Dropout(0.5)
         self.fc2 = nn.Linear(512, 64)
 
@@ -35,6 +36,8 @@ class SegMapNet(nn.Module):
         x = self.relu(self.conv2(x))
         x = self.pool2(x)
         x = self.relu(self.conv3(x))
+
+        x = x.view(-1, 64 * 8 * 8 * 4)
         x = self.relu(self.fc1(x)) 
         x = self.bn1(x)
         x = self.dropout(x)
