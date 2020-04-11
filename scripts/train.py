@@ -42,7 +42,7 @@ if __name__ == "__main__":
     
     train_fold = np.ones(ids.shape, dtype=np.int)
 
-    print(len(np.unique(ids)))
+    # print(len(np.unique(ids)))
 
     ## separating indexes on train and test parts
     for c in np.unique(ids):
@@ -68,11 +68,11 @@ if __name__ == "__main__":
     preprocessor.init_segments(segments, ids,train_ids=ids)
     gen_train = Generator(
         preprocessor,
-        ids,
+        train_ids,
         n_ids,
         train=True,
         batch_size=64,
-        shuffle=False,
+        shuffle=True,
     )
 
     # Start training
@@ -80,10 +80,15 @@ if __name__ == "__main__":
     import torch.optim as optim
     import torch.nn as nn
 
-    segmap_net = SegMapNet()
+    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    # device = torch.device("cpu")
+
+    segmap_net = SegMapNet(data18.n_classes)
+    segmap_net.to(device)
+    segmap_net._initialize_weights()
     # segmap_net = segmap_net.float()
     criterion = nn.CrossEntropyLoss()
-    optimizer = optim.Adam(segmap_net.parameters(), lr=0.0001)
+    optimizer = optim.Adam(segmap_net.parameters(), lr=0.001)
 
     batches = np.array([1] * gen_train.n_batches)
     for epoch in range(2):
@@ -94,21 +99,28 @@ if __name__ == "__main__":
             optimizer.zero_grad()
 
             batch_segments, batch_classes = gen_train.next()
-            batch_segments = torch.from_numpy(batch_segments)
-            batch_classes = torch.from_numpy(batch_classes)
+            if batch_segments.shape[0] == 1:
+                # only have one sample in a batch
+                continue
 
-            print(batch_segments.size())
+            batch_segments = torch.from_numpy(batch_segments).to(device)
+            batch_classes = torch.from_numpy(batch_classes).to(device)
+
+            # print(batch_classes)
+            # print(batch_segments.size())
 
             output = segmap_net(batch_segments.float())
+            # print(output)
             loss = criterion(output, batch_classes)
             loss.backward()
+            # print(segmap_net.fc2.weight)
             optimizer.step()
+            # print(segmap_net.fc2.weight)
             running_loss += loss.item()
-            # if step % 2000 == 1999:    # print every 2000 mini-batches
+            # if step % 100 == 99:    # print every 2000 mini-batches
             print('[%d, %5d] loss: %.3f' %
-                (epoch + 1, step + 1, running_loss / 2000))
-            running_loss = 0.0
-
+                (epoch + 1, step + 1, running_loss))
+            running_loss = 0.0 
     print('Finished Training')
 
 

@@ -57,6 +57,6 @@ class Generator(object):
 
         batch_segments = batch_segments[:, np.newaxis, :, :, :]
         # batch_segments = np.insert(batch_segments, 1, 1, axis = 1)
-        batch_classes = to_onehot(batch_classes, self.n_classes)
+        # batch_classes = to_onehot(batch_classes, self.n_classes)
 
         return batch_segments, batch_classes
