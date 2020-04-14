@@ -1,13 +1,4 @@
-#
-# Created on Thu Apr 09 2020
-#
-# Copyright (c) 2020 HITSZ-NRSL
-# All rights reserved
-#
-# Author: EpsAvlc
-#
-
-#!/usr/bin/python3  
+# !/home/caoming/Projects/SegMapClassifier/venv/bin/python3.6
 # -*- coding: utf-8 -*-
 
 import numpy as np
@@ -15,6 +6,8 @@ from dataset import Dataset
 from preprocessors import Preprocessor
 from generator import Generator
 from net import SegMapNet
+import sys
+
 
 
 if __name__ == "__main__":
@@ -79,20 +72,26 @@ if __name__ == "__main__":
     import torch
     import torch.optim as optim
     import torch.nn as nn
+    # import tensorwatch as tw
 
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     # device = torch.device("cpu")
 
     segmap_net = SegMapNet(data18.n_classes)
+    segmap_net.initialize_weights()
     segmap_net.to(device)
-    segmap_net._initialize_weights()
     # segmap_net = segmap_net.float()
+    # tw.draw_model(segmap_net, [1, 1, 32, 32, 16])
     criterion = nn.CrossEntropyLoss()
-    optimizer = optim.Adam(segmap_net.parameters(), lr=0.001)
+    optimizer = optim.Adam(segmap_net.parameters(), lr=0.0002)
 
     batches = np.array([1] * gen_train.n_batches)
-    for epoch in range(2):
+
+    from tensorboardX import SummaryWriter
+    writer = SummaryWriter(log_dir='/home/caoming/Projects/SegMapClassifier/logs', comment='segmap_torch')
+    for epoch in range(256):
         running_loss = 0.0
+        correct = 0
         np.random.shuffle(batches)
 
         for step, train in enumerate(batches):
@@ -104,23 +103,40 @@ if __name__ == "__main__":
                 continue
 
             batch_segments = torch.from_numpy(batch_segments).to(device)
+            batch_segments.requires_grad = True
             batch_classes = torch.from_numpy(batch_classes).to(device)
 
-            # print(batch_classes)
-            # print(batch_segments.size())
+            scales_torch = torch.from_numpy(np.array(preprocessor.last_scales)).to(device)
+            scales_torch.requires_grad = True
+            output = segmap_net(batch_segments.float(), scales_torch.float())
+            ## disp accuracy
 
-            output = segmap_net(batch_segments.float())
-            # print(output)
+            
+            # print('correct: %d' % correct)
+            ##
             loss = criterion(output, batch_classes)
             loss.backward()
             # print(segmap_net.fc2.weight)
             optimizer.step()
             # print(segmap_net.fc2.weight)
             running_loss += loss.item()
-            # if step % 100 == 99:    # print every 2000 mini-batches
-            print('[%d, %5d] loss: %.3f' %
-                (epoch + 1, step + 1, running_loss))
-            running_loss = 0.0 
+            predict_classes = torch.argmax(output, 1)
+            for i in range(predict_classes.size()[0]):
+                if predict_classes[i] == batch_classes[i]:
+                    correct = correct + 1
+            if step % 100 == 99:    # print every 2000 mini-batches
+                acc = float(correct) / 100.0 / preprocessor.batch_size
+                print('[%d, %5d] loss: %.3f, acc: %f, correct: %d' %
+                    (epoch + 1, step + 1, running_loss / 100, 
+                    acc*100, correct))
+                writer.add_scalar('Train/Loss', running_loss, epoch)
+                writer.add_scalar('Train/Acc', acc, epoch)
+                running_loss = 0.0 
+                correct = 0
+        
+        torch.save(segmap_net.state_dict(), '/home/caoming/Projects/SegMapClassifier/models/segmap_ ' 
+        + str(epoch)+'.pkl')
+    writer.close()
     print('Finished Training')
 
 

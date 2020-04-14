@@ -1,14 +1,4 @@
-#
-# Created on Tue Apr 07 2020
-#
-# Copyright (c) 2020 HITSZ-NRSL
-# All rights reserved
-#
-# Author: EpsAvlc
-#
-
-#!/usr/bin/python3  
-# -*- coding: utf-8 -*-
+ # -*- coding: utf-8 -*-
 import numpy as np
 from tools import load_segments, load_labels, load_features, load_positions, load_matches, load_merges
 

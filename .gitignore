@@ -1,3 +1,7 @@
 .vscode/
 dataset/
-scripts/__pycache__
+**/__pycache__
+**/runs
+/venv
+**/segmap_tf_log
+models/

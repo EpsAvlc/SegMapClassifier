@@ -1,13 +1,3 @@
-#
-# Created on Thu Apr 09 2020
-#
-# Copyright (c) 2020 HITSZ-NRSL
-# All rights reserved
-#
-# Author: EpsAvlc
-#
-
-#!/usr/bin/python3  
 # -*- coding: utf-8 -*
 
 import numpy as np
@@ -290,6 +280,7 @@ class Preprocessor(object):
                 scale = np.tile(np.max(segment), 3)
                 segment = segment / scale * (self.voxels - 1)
             elif self.scale_method == "fit":
+                # xyz 最大值 1*3向量
                 scale = np.max(segment, axis=0)
                 thresholded_scale = np.maximum(scale, self.min_scale)
                 segment = segment / thresholded_scale * (self.voxels - 1)

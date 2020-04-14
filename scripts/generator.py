@@ -1,12 +1,3 @@
-#
-# Created on Thu Apr 09 2020
-#
-# Copyright (c) 2020 HITSZ-NRSL
-# All rights reserved
-#
-# Author: EpsAvlc
-#
-
 import numpy as np
 
 def to_onehot(y, n_classes):
